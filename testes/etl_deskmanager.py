@@ -4,50 +4,18 @@ Created on Fri Feb 12 13:31:57 2021
 @author: Clecio Antao
 Rotina para leitura de API Desk Manager para popular tabela SQL Server
 """
-
+from datetime import datetime
 from airflow import DAG
-from datetime import datetime, timedelta
-from airflow.operators.bash_operator import BashOperator
+from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.email_operator import EmailOperator
-#from airflow.operators.dummy import DummyOperator
-from airflow.utils.dates import days_ago
 
-from utils.callables import carrega_dados, envia_email
+def print_hello():
+    return 'Hello world from first Airflow DAG!'
 
+dag = DAG('hello_world', description='Hello World DAG',
+          schedule_interval='0 12 * * *',
+          start_date=datetime(2017, 3, 20), catchup=False)
 
-dag = DAG(
-    "carga_deskmanager",
-    default_args={
-        "owner": "airflow",
-        'email': ['clecio.antao@gmail.com'],
-        'email_on_failure': True,
-    },
-    schedule_interval='0 22 * * *',
-    start_date=days_ago(1),
-    dagrun_timeout=timedelta(minutes=120),
-    catchup=False,
-    tags=['etl'],
-)
+hello_operator = PythonOperator(task_id='hello_task', python_callable=print_hello, dag=dag)
 
-t1 = PythonOperator(
-    task_id='popula_DeskManagerAF', 
-    python_callable=carrega_dados,
-    params={"rel": "868","tab":"DeskManagerAF"},
-    dag=dag
-)
-
-t2 = PythonOperator(
-    task_id='popula_DeskManagerInteracoesAF', 
-    python_callable=carrega_dados,
-    params={"rel": "878","tab":"DeskManagerInteracoesAF"},
-    dag=dag
-)
-
-t3 = PythonOperator(
-    task_id='envia_email', 
-    python_callable=envia_email,
-    dag=dag
-)
-
-t1 >> t2 >> t3
+hello_operator
